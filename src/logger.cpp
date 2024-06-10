@@ -1,20 +1,19 @@
 
-#include <string_view>
-#include <iostream>
-
 #include "logger.hpp"
+
+#include <iostream>
+#include <string_view>
 
 namespace compress {
 
 bool CLILogger::log(std::string_view toLog, bool loggingEnabeled) {
-  if (loggingEnabeled)
-     std::cout << toLog << "\n";
+  if (loggingEnabeled) std::cout << toLog << "\n";
 
   return loggingEnabeled;
 }
 
 bool CLILogger::logComputingGainsForith(long i, bool loggingEnabeled) {
-  std::string ending =  "th";
+  std::string ending = "th";
 
   if (i == 1)
     ending = "st";
@@ -23,15 +22,17 @@ bool CLILogger::logComputingGainsForith(long i, bool loggingEnabeled) {
   else if (i == 3)
     ending = "rd";
 
-  std::cout << "Computing MoveGains for " << i << ending << "Vertex in current Set\n"; 
+  std::cout << "Computing MoveGains for " << i << ending
+            << "Vertex in current Set\n";
 
   return true;
 }
 
-bool CLILogger::logReorderingSubgraph(long numberOfVertices,  bool loggingEnabeled) {
+bool CLILogger::logReorderingSubgraph(long numberOfVertices,
+                                      bool loggingEnabeled) {
   std::cout << "Reordering Subgraph of order " << numberOfVertices << '\n';
 
   return true;
 }
 
-} // namespace compress
+}  // namespace compress

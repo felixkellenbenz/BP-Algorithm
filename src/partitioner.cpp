@@ -21,8 +21,7 @@ std::pair<VertexSet, VertexSet> RandomBiPartioner::bisect(
   auto AsVertexVector = [](VertexSet&& toVector) {
     std::vector<Vertex> vertexVector;
 
-    for (auto& vertex : toVector)
-      vertexVector.push_back(vertex);
+    for (auto& vertex : toVector) vertexVector.push_back(vertex);
 
     return vertexVector;
   };

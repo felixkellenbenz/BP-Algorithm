@@ -1,41 +1,47 @@
-#include "algorithm.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <utility>
 #include <vector>
 
+#include "algorithm.hpp"
 #include "graph.hpp"
 
 namespace compress {
 
+namespace utility {
+
 double inline numberOfBits(double x) { return std::floor(std::log2(x)) + 1; }
 
-double inline computeGain(int neighboursInFirst, int neighboursInSecond, long sizeOfFirst, long sizeOfSecond) {
-  return neighboursInFirst * numberOfBits(static_cast<double>(sizeOfFirst) / neighboursInFirst + 1) + 
-         neighboursInSecond  * numberOfBits(static_cast<double>(sizeOfSecond) / neighboursInSecond + 1);
+double inline computeGain(int neighboursInFirst, int neighboursInSecond,
+                          long sizeOfFirst, long sizeOfSecond) {
+  return neighboursInFirst *
+             numberOfBits(static_cast<double>(sizeOfFirst) / neighboursInFirst +
+                          1) +
+         neighboursInSecond *
+             numberOfBits(
+                 static_cast<double>(sizeOfSecond) / neighboursInSecond + 1);
 }
 
-int countNeighboursInSet(Vertex toCountFor, const VertexSet& countIn, const std::list<Vertex>& neighbours) {
-
+int countNeighboursInSet(Vertex toCountFor, const VertexSet& countIn,
+                         const std::list<Vertex>& neighbours) {
   int numberOfNeighbours = 0;
   for (const Vertex& neighbour : neighbours) {
-    numberOfNeighbours = countIn.contains(neighbour) ? ++numberOfNeighbours : numberOfNeighbours;
+    numberOfNeighbours =
+        countIn.contains(neighbour) ? ++numberOfNeighbours : numberOfNeighbours;
   }
   return numberOfNeighbours;
 }
 
-void swapTwoVertices(VertexSet& first, VertexSet& second, Vertex inFirst, Vertex inSecond) {
+void swapTwoVertices(VertexSet& first, VertexSet& second, Vertex inFirst,
+                     Vertex inSecond) {
   first.erase(inFirst);
   second.erase(inSecond);
   second.insert(inFirst);
-  first.insert(inSecond); 
+  first.insert(inSecond);
 }
 
-double computeMoveGain(Vertex toMove, VertexSet firstPart,
-                                  VertexSet secondPart,
-                                  const QDGraph& toReorder) {
-
+double computeMoveGain(Vertex toMove, VertexSet firstPart, VertexSet secondPart,
+                       const QDGraph& toReorder) {
   auto adjacentVertices = toReorder.neighbours(toMove);
 
   VertexSet& moveFrom = firstPart.contains(toMove) ? firstPart : secondPart;
@@ -44,21 +50,26 @@ double computeMoveGain(Vertex toMove, VertexSet firstPart,
   double sum = 0;
 
   for (const Vertex& adjacentVertex : adjacentVertices) {
-    
-    // compute cost function without moving 
-    int neighboursInMoveFrom = countNeighboursInSet(adjacentVertex, moveFrom, toReorder.neighbours(adjacentVertex));
-    int neighboursInMoveTo = countNeighboursInSet(adjacentVertex, moveTo, toReorder.neighbours(adjacentVertex));
+    // compute cost function without moving
+    int neighboursInMoveFrom = countNeighboursInSet(
+        adjacentVertex, moveFrom, toReorder.neighbours(adjacentVertex));
+    int neighboursInMoveTo = countNeighboursInSet(
+        adjacentVertex, moveTo, toReorder.neighbours(adjacentVertex));
 
-    int originalCost = computeGain(neighboursInMoveFrom, neighboursInMoveTo, moveFrom.size(), moveTo.size());
+    int originalCost = computeGain(neighboursInMoveFrom, neighboursInMoveTo,
+                                   moveFrom.size(), moveTo.size());
 
-    // compute cost function after moving 
+    // compute cost function after moving
     moveFrom.erase(toMove);
     moveTo.insert(toMove);
 
-    neighboursInMoveFrom = countNeighboursInSet(adjacentVertex, moveFrom, toReorder.neighbours(adjacentVertex));
-    neighboursInMoveTo = countNeighboursInSet(adjacentVertex, moveTo, toReorder.neighbours(adjacentVertex));
+    neighboursInMoveFrom = countNeighboursInSet(
+        adjacentVertex, moveFrom, toReorder.neighbours(adjacentVertex));
+    neighboursInMoveTo = countNeighboursInSet(
+        adjacentVertex, moveTo, toReorder.neighbours(adjacentVertex));
 
-    int costAfterMoving = computeGain(neighboursInMoveFrom, neighboursInMoveTo, moveFrom.size(), moveTo.size());
+    int costAfterMoving = computeGain(neighboursInMoveFrom, neighboursInMoveTo,
+                                      moveFrom.size(), moveTo.size());
 
     moveTo.erase(toMove);
     moveFrom.insert(toMove);
@@ -69,7 +80,10 @@ double computeMoveGain(Vertex toMove, VertexSet firstPart,
   return sum;
 }
 
-std::pair<VertexSet, VertexSet> Reorderer::bisect(VertexSet first, VertexSet second, const QDGraph& toReorder) {
+} // namespace utils
+
+std::pair<VertexSet, VertexSet> Reorderer::bisect(std::pair<VertexSet, VertexSet> partition,
+                                                  const QDGraph& toReorder) {
   bool swapped = true;
 
   for (long i = 0; swapped && i < 20; i++) {
@@ -80,9 +94,11 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(VertexSet first, VertexSet sec
 
       auto createFromIter = createFrom.begin();
 
-      for (long i = 0; i < createFrom.size() && createFromIter != createFrom.end(); i++) {
+      for (long i = 0;
+           i < createFrom.size() && createFromIter != createFrom.end(); i++) {
         actionLogger.logComputingGainsForith(i, loggingEnabeled);
-        double moveGain = computeMoveGain(*createFromIter, first, second, toReorder);
+        double moveGain =
+            utility::computeMoveGain(*createFromIter, partition.first, partition.second, toReorder);
         moveGainsArray.push_back({*createFromIter, moveGain});
       }
 
@@ -90,11 +106,11 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(VertexSet first, VertexSet sec
     };
 
     std::vector<std::pair<Vertex, double>> moveGainsForFirstPart =
-        MoveGainsArrayCreator(first);
+        MoveGainsArrayCreator(partition.first);
     std::vector<std::pair<Vertex, double>> moveGainsForSecondPart =
-        MoveGainsArrayCreator(second);
+        MoveGainsArrayCreator(partition.second);
 
-    auto comperator = [](const std::pair<Vertex,double>& lhs,
+    auto comperator = [](const std::pair<Vertex, double>& lhs,
                          const std::pair<Vertex, double>& rhs) {
       return lhs.second > rhs.second;
     };
@@ -103,15 +119,14 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(VertexSet first, VertexSet sec
               comperator);
     std::sort(moveGainsForSecondPart.begin(), moveGainsForSecondPart.end(),
               comperator);
-    
-    
+
     auto firstPartIt = moveGainsForFirstPart.begin();
     auto secPartIt = moveGainsForSecondPart.begin();
 
     for (; firstPartIt != moveGainsForFirstPart.end() &&
            secPartIt != moveGainsForSecondPart.end();) {
       if (firstPartIt->second + secPartIt->second > 0) {
-        swapTwoVertices(first, second, firstPartIt->first, secPartIt->first);
+        utility::swapTwoVertices(partition.first, partition.second, firstPartIt->first, secPartIt->first);
         swapped = true;
         firstPartIt++;
         secPartIt++;
@@ -121,19 +136,19 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(VertexSet first, VertexSet sec
     }
   }
 
-  return {first, second}; 
+  return {first, second};
 }
 
 Order Reorderer::reorder(const QDGraph& toReorder, long begin, long end) {
   Order vertexOrder;
   actionLogger.logReorderingSubgraph(toReorder.dataOrder(), loggingEnabeled);
-  auto partition = partitionStrategy->bisect(toReorder); 
+  auto partition = partitionStrategy->bisect(toReorder);
   bool swapped = true;
   bool recursionEnd = false;
 
   auto OrderCombiner = [&](const Order& toAdd) {
     for (auto& [vertex, orderValue] : toAdd) {
-      vertexOrder[vertex] = orderValue; 
+      vertexOrder[vertex] = orderValue;
     }
   };
 
@@ -149,9 +164,11 @@ Order Reorderer::reorder(const QDGraph& toReorder, long begin, long end) {
     // calculate suborders and glue them together
     long upper = begin + partition.first.size();
 
-    QDGraph firstSubgraph(toReorder.getQueryVertices(), partition.first, toReorder);
-    QDGraph secondSubgraph(toReorder.getQueryVertices(), partition.second, toReorder);
-    
+    QDGraph firstSubgraph(toReorder.getQueryVertices(), partition.first,
+                          toReorder);
+    QDGraph secondSubgraph(toReorder.getQueryVertices(), partition.second,
+                           toReorder);
+
     Order suborderOfFirst = reorder(firstSubgraph, begin, upper - 1);
     Order suborderOfSecond = reorder(secondSubgraph, upper, end);
 
@@ -161,4 +178,5 @@ Order Reorderer::reorder(const QDGraph& toReorder, long begin, long end) {
 
   return vertexOrder;
 }
+
 }  // namespace compress
