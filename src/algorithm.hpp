@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include "graph.hpp"
 #include "logger.hpp"
@@ -22,7 +23,7 @@ class Reorderer {
         loggingEnabeled(true) {}
 
   Order reorder(const QDGraph& toReorder, long begin, long end);
-  std::pair<VertexSet, VertexSet> bisect(VertexSet first, VertexSet second,
+  std::pair<VertexSet, VertexSet> bisect(std::pair<VertexSet, VertexSet>,
                                          const QDGraph& toReorder);
 
   void enableLogging() { loggingEnabeled = true; }

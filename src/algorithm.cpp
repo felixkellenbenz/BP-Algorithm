@@ -60,6 +60,7 @@ double computeMoveGain(Vertex toMove, VertexSet firstPart, VertexSet secondPart,
                                    moveFrom.size(), moveTo.size());
 
     // compute cost function after moving
+    // Can we avoid actually moving the vertices ?
     moveFrom.erase(toMove);
     moveTo.insert(toMove);
 
@@ -85,18 +86,20 @@ double computeMoveGain(Vertex toMove, VertexSet firstPart, VertexSet secondPart,
 std::pair<VertexSet, VertexSet> Reorderer::bisect(std::pair<VertexSet, VertexSet> partition,
                                                   const QDGraph& toReorder) {
   bool swapped = true;
+  long graphSize = partition.first.size() + partition.second.size();
 
   for (long i = 0; swapped && i < 20; i++) {
     swapped = false;
 
-    auto MoveGainsArrayCreator = [&](const VertexSet& createFrom) {
+    auto MoveGainsArrayCreator = [&](const VertexSet& createFrom, bool secondCall) {
       std::vector<std::pair<Vertex, double>> moveGainsArray;
 
       auto createFromIter = createFrom.begin();
 
       for (long i = 0;
            i < createFrom.size() && createFromIter != createFrom.end(); i++) {
-        actionLogger.logComputingGainsForith(i, loggingEnabeled);
+        // Consider iter limit when logging
+        actionLogger.logComputingGainsForith(secondCall ? i + (graphSize - createFrom.size()) : i, graphSize, loggingEnabeled);
         double moveGain =
             utility::computeMoveGain(*createFromIter, partition.first, partition.second, toReorder);
         moveGainsArray.push_back({*createFromIter, moveGain});
@@ -106,9 +109,9 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(std::pair<VertexSet, VertexSet
     };
 
     std::vector<std::pair<Vertex, double>> moveGainsForFirstPart =
-        MoveGainsArrayCreator(partition.first);
+        MoveGainsArrayCreator(partition.first, false);
     std::vector<std::pair<Vertex, double>> moveGainsForSecondPart =
-        MoveGainsArrayCreator(partition.second);
+        MoveGainsArrayCreator(partition.second, true);
 
     auto comperator = [](const std::pair<Vertex, double>& lhs,
                          const std::pair<Vertex, double>& rhs) {
@@ -136,14 +139,13 @@ std::pair<VertexSet, VertexSet> Reorderer::bisect(std::pair<VertexSet, VertexSet
     }
   }
 
-  return {first, second};
+  return partition;
 }
 
 Order Reorderer::reorder(const QDGraph& toReorder, long begin, long end) {
   Order vertexOrder;
   actionLogger.logReorderingSubgraph(toReorder.dataOrder(), loggingEnabeled);
   auto partition = partitionStrategy->bisect(toReorder);
-  bool swapped = true;
   bool recursionEnd = false;
 
   auto OrderCombiner = [&](const Order& toAdd) {
@@ -159,7 +161,7 @@ Order Reorderer::reorder(const QDGraph& toReorder, long begin, long end) {
   }
 
   if (!recursionEnd) {
-    partition = bisect(partition.first, partition.second, toReorder);
+    partition = bisect(partition, toReorder);
 
     // calculate suborders and glue them together
     long upper = begin + partition.first.size();

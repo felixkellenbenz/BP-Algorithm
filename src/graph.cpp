@@ -1,9 +1,9 @@
-#include "graph.hpp"
-
 #include <climits>
 #include <sstream>
 #include <utility>
 #include <vector>
+
+#include "graph.hpp"
 
 namespace compress {
 

@@ -1,10 +1,9 @@
-#include "partitioner.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <random>
 #include <vector>
 
+#include "partitioner.hpp"
 #include "graph.hpp"
 
 namespace compress {

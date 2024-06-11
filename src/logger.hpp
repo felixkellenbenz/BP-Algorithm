@@ -15,7 +15,7 @@ class Logger {
   Logger& operator=(Logger&&) = default;
 
   virtual bool log(std::string_view toLog, bool loggingEnabeled) = 0;
-  virtual bool logComputingGainsForith(long i, bool loggingEnabeled) = 0;
+  virtual bool logComputingGainsForith(long i, long total, bool loggingEnabeled) = 0;
   virtual bool logReorderingSubgraph(long numberOfVertices,
                                      bool loggingEnabeled) = 0;
 };
@@ -32,7 +32,7 @@ class CLILogger : public Logger {
   CLILogger& operator=(CLILogger&&) = default;
 
   bool log(std::string_view toLog, bool loggingEnabeled) override;
-  bool logComputingGainsForith(long i, bool loggingEnabeled) override;
+  bool logComputingGainsForith(long i, long total, bool loggingEnabeled) override;
   bool logReorderingSubgraph(long numberOfVertices,
                              bool loggingEnabeled) override;
 };
