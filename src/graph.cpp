@@ -1,4 +1,3 @@
-#include <climits>
 #include <cstddef>
 #include <string>
 
@@ -59,9 +58,8 @@ bool hasEdge(const Edge& searchedEdge, const Graph& toSearchIn)  {
 std::list<Vertex> Graph::neighbours(const Vertex& v) const {
   if (adjacencyList.find(v) != adjacencyList.end())
     return adjacencyList.find(v)->second;
- 
-  throw VertexNotFoundException("The vertex with ID: " + std::to_string(v.vertexID) +
-        "and Type: " + vertexTypeToString(v.vertexType) + " does not exist"); 
+
+  return std::list<Vertex>{}; 
 }
 
 [[nodiscard]] std::size_t Graph::size() const {
@@ -119,8 +117,11 @@ QDGraph::QDGraph(const VertexSet& _queryVertexSet, const VertexSet& _dataVertexS
 [[nodiscard]] VertexSet QDGraph::vertices() const {
   VertexSet vertices;
 
-  vertices.emplace(queryVertexSet); 
-  vertices.emplace(dataVertexSet);
+  for (auto& vertex : queryVertexSet)
+    vertices.insert(vertex);
+
+  for (auto& vertex : dataVertexSet)
+    vertices.insert(vertex);
    
   return vertices;
 }

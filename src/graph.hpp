@@ -9,11 +9,10 @@
 template<>
 struct std::hash<compress::Vertex> {
   
-  std::size_t operator()(const compress::Vertex& vertex) {
+  std::size_t operator()(const compress::Vertex& vertex) const {
     std::size_t IDHash = std::hash<long>{}(vertex.vertexID);
     std::size_t TypeHash = std::hash<compress::Vertex::Type>{}(vertex.vertexType); 
     std::size_t firstCombine =  0 ^ IDHash + 0x9e3779b9 + (1 << 6) + (1 >> 2);
-
     return firstCombine ^ (TypeHash + 0x9e3779b9 + (1 << 6) + (1 >> 2));
   }
 };
@@ -68,8 +67,8 @@ public:
 
   VertexSet dataVertices() const;
   VertexSet queryVertices() const;
-  std::size_t numberOfDataVertices() { return dataVertexSet.size(); }
-  std::size_t numberOfQueryVertices() { return queryVertexSet.size(); } 
+  std::size_t numberOfDataVertices() const { return dataVertexSet.size(); }
+  std::size_t numberOfQueryVertices() const { return queryVertexSet.size(); } 
 
   bool addEdge(const Edge& newEdge) override; 
 };
